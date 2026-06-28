@@ -2,4 +2,6 @@ loads 'Hello world!'
 
 print:
     printc
-    nz && jmp @print
+    !eos
+    jmp @print
+    end

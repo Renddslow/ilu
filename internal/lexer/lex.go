@@ -6,7 +6,7 @@ import (
 	"github.com/Renddslow/ilu/internal/util"
 )
 
-func Lex(input []byte) ([]*Token, *util.LexError) {
+func Lex(input []byte) ([]*Token, *util.Error) {
 	tokens := make([]*Token, 0)
 	line, col := 0, 0
 
@@ -38,11 +38,17 @@ func Lex(input []byte) ([]*Token, *util.LexError) {
 			if word != "" {
 				token := NewToken(word, line, col)
 				if token == nil {
-					return nil, util.NewLexError(fmt.Sprintf("unrecognized keyword %s", word), line, col)
+					return nil, util.NewLexError(fmt.Sprintf("unrecognized instruction %s", word), line, col)
 				}
 				tokens = append(tokens, NewToken(word, line, col))
 			}
 			word = ""
+			col++
+			continue
+		}
+
+		if char == '!' && !inString {
+			tokens = append(tokens, NewToken("!", line, col))
 			col++
 			continue
 		}
@@ -70,7 +76,11 @@ func Lex(input []byte) ([]*Token, *util.LexError) {
 	}
 
 	if word != "" {
-		tokens = append(tokens, NewToken(word, line, col))
+		token := NewToken(word, line, col)
+		if token == nil {
+			return nil, util.NewLexError(fmt.Sprintf("unrecognized instruction `%s`", word), line, col)
+		}
+		tokens = append(tokens, token)
 	}
 
 	return tokens, nil

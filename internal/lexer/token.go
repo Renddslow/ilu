@@ -11,7 +11,8 @@ const (
 	String
 	LabelDef
 	LabelRef
-	Logical
+	Negation
+	Done
 )
 
 type Token struct {
@@ -21,7 +22,7 @@ type Token struct {
 	Column int
 }
 
-var ops = []string{"loads", "printc", "jmp", "nz"}
+var ops = []string{"loads", "printc", "jmp", "eos", "end"}
 
 func containsOp(token string) bool {
 	for _, op := range ops {
@@ -61,10 +62,10 @@ func NewToken(token string, line, col int) *Token {
 		}
 	}
 
-	if token == "&&" {
+	if token == "!" {
 		return &Token{
-			Type:   Logical,
-			Value:  "and",
+			Type:   Negation,
+			Value:  "",
 			Line:   line,
 			Column: col,
 		}
