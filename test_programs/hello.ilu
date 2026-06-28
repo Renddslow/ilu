@@ -1,1 +1,5 @@
-stdout <s 'Hello world', 0
+loads 'Hello world!'
+
+print:
+    printc
+    nz && jmp @print

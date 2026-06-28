@@ -1,10 +1,83 @@
 package lexer
 
-import "fmt"
+import (
+	"strings"
+)
 
-type Token struct{}
+type TokenType int
 
-func NewToken(token string) *Token {
-	fmt.Println(token)
-	return &Token{}
+const (
+	Op TokenType = iota
+	String
+	LabelDef
+	LabelRef
+	Logical
+)
+
+type Token struct {
+	Type   TokenType
+	Value  string
+	Line   int
+	Column int
+}
+
+var ops = []string{"loads", "printc", "jmp", "nz"}
+
+func containsOp(token string) bool {
+	for _, op := range ops {
+		// Ops can have a condition suffix
+		if strings.HasPrefix(token, op) {
+			return true
+		}
+	}
+	return false
+}
+
+func NewToken(token string, line, col int) *Token {
+	if containsOp(token) {
+		return &Token{
+			Type:   Op,
+			Value:  token,
+			Line:   line,
+			Column: col,
+		}
+	}
+
+	if strings.HasSuffix(token, ":") {
+		return &Token{
+			Type:   LabelDef,
+			Value:  strings.TrimSuffix(token, ":"),
+			Line:   line,
+			Column: col,
+		}
+	}
+
+	if strings.HasPrefix(token, "@") {
+		return &Token{
+			Type:   LabelRef,
+			Value:  strings.TrimPrefix(token, "@"),
+			Line:   line,
+			Column: col,
+		}
+	}
+
+	if token == "&&" {
+		return &Token{
+			Type:   Logical,
+			Value:  "and",
+			Line:   line,
+			Column: col,
+		}
+	}
+
+	return nil
+}
+
+func NewString(token string, line, col int) *Token {
+	return &Token{
+		Type:   String,
+		Value:  token,
+		Line:   line,
+		Column: col,
+	}
 }

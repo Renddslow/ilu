@@ -1,46 +1,77 @@
 package lexer
 
-func Lex(input []byte) []*Token {
-	rawTokens := make([]string, 0)
+import (
+	"fmt"
 
+	"github.com/Renddslow/ilu/internal/util"
+)
+
+func Lex(input []byte) ([]*Token, *util.LexError) {
+	tokens := make([]*Token, 0)
+	line, col := 0, 0
+
+	word := ""
 	inString := false
-	tokenValue := ""
-
 	for i := 0; i < len(input); i++ {
-		if (input[i] == ' ' && !inString) || input[i] == '\n' {
-			if tokenValue != "" {
-				rawTokens = append(rawTokens, tokenValue)
-			}
-			tokenValue = ""
-			continue
-		}
+		char := input[i]
 
-		if input[i] == '\'' {
+		if char == '\n' {
 			if inString {
-				rawTokens = append(rawTokens, tokenValue)
-				tokenValue = ""
+				return nil, util.NewLexError("unterminated string", line, col)
 			}
-			inString = !inString
+
+			if word != "" {
+				token := NewToken(word, line, col)
+				if token == nil {
+					return nil, util.NewLexError(fmt.Sprintf("unrecognized keyword %s", word), line, col)
+				}
+				tokens = append(tokens, token)
+			}
+
+			line++
+			col = 0
+			word = ""
 			continue
 		}
 
-		if input[i] == '\\' {
-			tokenValue += string(input[i+1])
-			i++
+		if char == ' ' && !inString {
+			if word != "" {
+				token := NewToken(word, line, col)
+				if token == nil {
+					return nil, util.NewLexError(fmt.Sprintf("unrecognized keyword %s", word), line, col)
+				}
+				tokens = append(tokens, NewToken(word, line, col))
+			}
+			word = ""
+			col++
 			continue
 		}
 
-		tokenValue += string(input[i])
+		if inString && char == '\'' {
+			inString = false
+			tokens = append(tokens, NewString(word, line, col))
+			word = ""
+			col++
+			continue
+		}
+
+		if !inString && char == '\'' {
+			inString = true
+			col++
+			continue
+		}
+
+		word += string(char)
+		col++
 	}
 
-	if tokenValue != "" {
-		rawTokens = append(rawTokens, tokenValue)
+	if inString {
+		return nil, util.NewLexError("unterminated string", line, col)
 	}
 
-	tokens := make([]*Token, len(rawTokens))
-	for _, t := range rawTokens {
-		tokens = append(tokens, NewToken(t))
+	if word != "" {
+		tokens = append(tokens, NewToken(word, line, col))
 	}
 
-	return tokens
+	return tokens, nil
 }

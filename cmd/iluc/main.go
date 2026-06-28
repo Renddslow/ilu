@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/Renddslow/ilu/internal/lexer"
 )
@@ -12,5 +14,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	lexer.Lex(data)
+
+	_, lexErr := lexer.Lex(data)
+
+	if lexErr != nil {
+		p, _ := filepath.Abs(programPath)
+		fmt.Println(lexErr.Display(data, p))
+		os.Exit(1)
+	}
 }
