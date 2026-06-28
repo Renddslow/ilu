@@ -35,6 +35,14 @@ func containsOp(token string) bool {
 }
 
 func NewToken(token string, line, col int) *Token {
+	if token == "end" {
+		return &Token{
+			Type:   Done,
+			Line:   line,
+			Column: col,
+		}
+	}
+
 	if containsOp(token) {
 		return &Token{
 			Type:   Op,
